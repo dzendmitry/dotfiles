@@ -1,58 +1,78 @@
+if [ -z "$PS1" ]; then
+   return
+fi
+
 [ -f /etc/bashrc ] && . /etc/bashrc
 
 eval $(launchctl export | grep -Ev ^.*/.*=)
 
-if [[ -t "0" || -p /dev/stdin ]]
-then 
-#### INTERACTIVE SHELL
-
-if [[ ${TERM} == "xterm-256color" || ${TERM} == "xterm-color" ]]; then
- export CLICOLOR=${TERM}
- _ps1_statusbar="\[\033]0;\u@macbook:\w\007\]"
-fi
+_prompt_host=macbook
+_prompt_len=16
 
 alias hist='history|egrep'
 
-_ps1_len=16
+if [[ ${TERM} == "xterm-256color" || ${TERM} == "xterm-color" ]]; then
+ export CLICOLOR=${TERM}
+ _set_prompt_tab() {
+   PS1="\[\033]0;\u@macbook:\w\007\]"
+ }
+ _t_red="\[$(tput setaf 1)\]"
+ _t_green="\[$(tput setaf 2)\]"
+ _t_yellow="\[$(tput setaf 3)\]"
+ _t_cyan="\[$(tput setaf 6)\]"
+ _t_rst="\[$(tput sgr0)\]"
+else
+ _set_prompt_tab() {
+   return
+ } 
+fi
 
-_ps1_truncated_pwd() {
+_has_git=$(which git)
+
+if [ -x $(which git) ]; then
+  _set_prompt_git() {
+    local branch state
+    if git rev-parse --git-dir > /dev/null 2>&1; then
+      branch=$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/(\1)/')
+      state=$(git status --porcelain | sed -e 's/^\(..\).*/\1/' | uniq)  
+      if [[ ${state} == "" ]]; then
+        PS1+="${_t_green}${branch}${_t_rst}"
+      elif [[ ${state} == "??" ]]; then
+        PS1+="${_t_yellow}${branch}?${_t_rst}"
+      else
+        PS1+="${_t_red}${branch}*${_t_rst}"
+      fi
+    fi
+  }
+else
+ _set_prompt_git() {
+  return
+ }
+fi  
+
+_set_prompt_pwd() {
     local b t r
     b=${PWD/$HOME/\~}
-    if [[ ${#b} == ${_ps1_len} ]]; then
-       echo $b
+    if [[ ${#b} == ${_prompt_len} ]]; then
+       t=${b}
     else
-       t=${b: -${_ps1_len}}
-      if [[ "$t" == "" ]]; then
-        echo $b
-      else
-        echo …$t
-      fi
+       t=${b: -${_prompt_len}}
+       if [[ "$t" == "" ]]; then
+         t=${b}
+       else
+         t="…${t}"
+       fi
    fi
+   PS1+="${_t_cyan}\u@${_prompt_host}:${t}${_t_rst}"
 }
 
-_ps1_parse_git_branch() {
-    git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/(\1)/'
+_set_prompt() {  
+  _set_prompt_tab
+  _set_prompt_pwd
+  _set_prompt_git
+  PS1+="$ "
 }
-
-_ps1_parse_git_dirty() {
-    st=$(git status 2>/dev/null | tail -n 1)
-    if [[ $st == "" ]]; then
-        echo ''
-    elif [[ ${st##nothing to commit*} == "" ]]; then
-        echo ''
-    elif [[ ${st##nothing added*} == "" ]]; then
-        echo '?'
-    else
-        echo '*'
-    fi
-}
-
-_ps1_term_green="\[$(tput setaf 2)\]"
-_ps1_term_red="\[$(tput setaf 1)\]"
-_ps1_term_cyan="\[$(tput setaf 6)\]"
-_ps1_term_rst="\[$(tput sgr0)\]"
-
-export PS1="${_ps1_statusbar}${_ps1_term_rst}${_ps1_term_cyan}\u@macbook${_ps1_term_rst}:\$(_ps1_truncated_pwd)${_ps1_term_green}\$(_ps1_parse_git_branch)${_ps1_term_red}\$(_ps1_parse_git_dirty)${_ps1_term_rst}$ "
+PROMPT_COMMAND="_set_prompt"
 
 if [ -f /opt/local/etc/bash_completion ]; then
    . /opt/local/etc/bash_completion
@@ -61,5 +81,3 @@ fi
 export HISTFILESIZE=8000
 export HISTSIZE=2000
 
-#### END OF INTERACTIVE SHELL CHECK
-fi
