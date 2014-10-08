@@ -1,0 +1,30 @@
+#!/bin/sh
+
+function envrc () {
+  if [ "$1" != "1.0" ]; then
+     echo "envrc 1.0"
+     exit -1
+  fi
+}
+
+function setenv () {
+  NAME=${1}
+  shift 1
+  eval ${NAME}=${@}
+  export ${NAME}
+  /bin/launchctl setenv ${NAME} ${!NAME}
+}
+
+function startifnot {
+    current_pid=$(pgrep -af "$1")
+    if [ $? -ne 0 ]; then
+        if [ -n "$2" ]; then
+            sleep $2
+        fi
+        open -a "$1"
+    fi
+}
+
+[ -f /etc/launchd.conf ] && eval $(cat /etc/launchd.conf | egrep '^setenv')
+
+[ -f ~/.launchrc ] && . ~/.launchrc

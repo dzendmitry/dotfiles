@@ -1,0 +1,30 @@
+envrc 1.0
+
+JAVA_HOME_EXEC=/System/Library/Frameworks/JavaVM.framework/Versions/Current/Commands/java_home
+
+if [ -x "$JAVA_HOME_EXEC" ]; then
+  JAVA_HOME=$("$JAVA_HOME_EXEC")
+  setenv JAVA_HOME $JAVA_HOME
+fi
+
+setenv LC_ALL en_US.UTF-8
+setenv LANG en_US.UTF-8
+
+setenv PATH ~/bin:${PATH}
+
+setenv RSTUDIO_PDFLATEX /opt/local/bin/lualatex
+
+setenv CABAL_CONFIG /Users/growler/Library/Haskell/config
+setenv PATH /Users/growler/Library/Haskell/bin:${PATH}
+
+setenv GOARCH amd64
+setenv GOOS darwin
+setenv GOROOT /opt/local/go
+setenv GOPATH ~/go
+
+setenv PATH ${GOPATH//://bin:}/bin:${PATH}
+
+setenv EDITOR /opt/local/bin/jmacs
+setenv VISUAL /Users/growler/Applications/edit
+
+startifnot 'Alfred 2.app'
