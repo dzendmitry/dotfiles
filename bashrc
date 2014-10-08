@@ -13,6 +13,10 @@ alias hist='history|egrep'
 
 if [[ ${TERM} == "xterm-256color" || ${TERM} == "xterm-color" ]]; then
  export CLICOLOR=${TERM}
+ __c() {
+  printf "\\[\033[38;5;%sm\\]" $1
+ }
+ __r="\\[\033[0m\\]"
  _set_prompt_tab() {
    PS1="\[\033]0;\u@macbook:\w\007\]"
  }
@@ -22,10 +26,24 @@ if [[ ${TERM} == "xterm-256color" || ${TERM} == "xterm-color" ]]; then
  _t_cyan="\[$(tput setaf 6)\]"
  _t_rst="\[$(tput sgr0)\]"
 else
+ __c() {
+   return
+ }
+ __r() {
+   return
+ }
  _set_prompt_tab() {
    return
  } 
 fi
+
+__c_host=$(__c 172)
+__c_cwd=$(__c 38)
+__c_prompt=$(__c 2)
+__c_alert=$(__c 1)
+__c_git_clean=$(__c 42)
+__c_git_mostly_clean=$(__c 208)
+__c_git_dirty=$(__c 197)
 
 _has_git=$(which git)
 
@@ -34,13 +52,13 @@ if [ -x $(which git) ]; then
     local branch state
     if git rev-parse --git-dir > /dev/null 2>&1; then
       branch=$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/(\1)/')
-      state=$(git status --porcelain | sed -e 's/^\(..\).*/\1/' | uniq)  
+      state=$(git status --porcelain 2> /dev/null | sed -e 's/^\(..\).*/\1/' | uniq)  
       if [[ ${state} == "" ]]; then
-        PS1+="${_t_green}${branch}${_t_rst}"
+        PS1+="${__c_git_clean}${branch}${__r}"
       elif [[ ${state} == "??" ]]; then
-        PS1+="${_t_yellow}${branch}?${_t_rst}"
+        PS1+="${__c_git_mostly_clean}${branch}?${__r}"
       else
-        PS1+="${_t_red}${branch}*${_t_rst}"
+        PS1+="${__c_git_dirty}${branch}*${__r}"
       fi
     fi
   }
@@ -63,14 +81,14 @@ _set_prompt_pwd() {
          t="…${t}"
        fi
    fi
-   PS1+="${_t_cyan}\u@${_prompt_host}:${t}${_t_rst}"
+   PS1+="${__c_host}\u@${_prompt_host}:${__c_cwd}${t}${__r}"
 }
 
 _set_prompt() {  
   _set_prompt_tab
   _set_prompt_pwd
   _set_prompt_git
-  PS1+="$ "
+  PS1+="\$(if [[ \$? == 0 ]]; then echo \"${__c_prompt}$\"; else echo \"${__c_alert}✗\"; fi)${__r} "
 }
 PROMPT_COMMAND="_set_prompt"
 
