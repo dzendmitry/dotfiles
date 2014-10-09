@@ -4,9 +4,13 @@ fi
 
 [ -f /etc/bashrc ] && . /etc/bashrc
 
-eval $(launchctl export | grep -Ev ^.*/.*=)
+if [[ $OSTYPE == *darwin* ]]; then
+  eval $(launchctl export | grep -Ev ^.*/.*=)
+  _prompt_host=macbook
+else
+  _prompt_host="\\h"
+fi
 
-_prompt_host=macbook
 _prompt_len=16
 
 alias hist='history|egrep'
@@ -18,7 +22,7 @@ if [[ ${TERM} == "xterm-256color" || ${TERM} == "xterm-color" ]]; then
  }
  __r="\\[\033[0m\\]"
  _set_prompt_tab() {
-   PS1="\[\033]0;\u@macbook:\w\007\]"
+   PS1="\[\033]0;\u@${_prompt_host}:\w\007\]"
  }
  _t_red="\[$(tput setaf 1)\]"
  _t_green="\[$(tput setaf 2)\]"
