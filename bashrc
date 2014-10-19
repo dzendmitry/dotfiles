@@ -1,6 +1,9 @@
 if [[ $(uname -s) == "Darwin" ]]; then
+   if [[ $OSTYPE != darwin* ]]; then
+      OSTYPE=darwin
+   fi
    if [[ "x${TERM_SESSION_ID}" == "x" ]]; then
-      [ -f ~/dotfiles/bin/launchd-env ] && . ~/dotfiles/bin/launchd-env
+      [ -f ~/dotfiles/bin/set-env ] && . ~/dotfiles/bin/set-env
    else
       eval $(launchctl export | grep -Ev ^.*/.*=)
    fi
@@ -12,10 +15,17 @@ fi
 
 [ -f /etc/bashrc ] && . /etc/bashrc
 
-_prompt_host=macbook
-_prompt_len=16
+if [[ $OSTYPE == darwin* ]]; then
+   eval $(echo -n "MACHINE_UUID="; ioreg -rd1 -c IOPlatformExpertDevice | awk '/IOPlatformUUID/ { print $3; }')
+fi
 
-alias hist='history|egrep'
+[ -f ~/.prompt ] && . ~/.prompt
+
+if [[ -z $_prompt_host ]]; then
+   _prompt_host="\\h"
+fi
+
+_prompt_len=16
 
 if [[ ${TERM} == "xterm-256color" ]]; then
  export CLICOLOR=${TERM}
@@ -24,7 +34,7 @@ if [[ ${TERM} == "xterm-256color" ]]; then
  }
  __r="\\[\033[0m\\]"
  _set_prompt_tab() {
-   PS1="\[\033]0;\u@macbook:\w\007\]"
+   PS1="\[\033]0;\u@${_prompt_host}:\w\007\]"
  }
 else
  __c() {

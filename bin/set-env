@@ -1,0 +1,23 @@
+#!/bin/sh
+
+function envrc () {
+  if [ "$1" != "1.0" ]; then
+     echo "envrc 1.0"
+     exit -1
+  fi
+}
+
+function setenv () {
+  NAME=${1}
+  shift 1
+  eval ${NAME}=${@}
+  export ${NAME}
+}
+
+function startifnot {
+  return
+}
+
+[ -f /etc/launchd.conf ] && eval $(cat /etc/launchd.conf | egrep '^setenv')
+
+[ -f ~/.launchrc ] && . ~/.launchrc
