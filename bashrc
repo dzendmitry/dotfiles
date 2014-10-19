@@ -1,17 +1,23 @@
+if [[ $(uname -s) == "Darwin" ]]; then
+   if [[ "x${TERM_SESSION_ID}" == "x" ]]; then
+      [ -f ~/dotfiles/bin/launchd-env ] && . ~/dotfiles/bin/launchd-env
+   else
+      eval $(launchctl export | grep -Ev ^.*/.*=)
+   fi
+fi
+
 if [ -z "$PS1" ]; then
    return
 fi
 
 [ -f /etc/bashrc ] && . /etc/bashrc
 
-eval $(launchctl export | grep -Ev ^.*/.*=)
-
 _prompt_host=macbook
 _prompt_len=16
 
 alias hist='history|egrep'
 
-if [[ ${TERM} == "xterm-256color" || ${TERM} == "xterm-color" ]]; then
+if [[ ${TERM} == "xterm-256color" ]]; then
  export CLICOLOR=${TERM}
  __c() {
   printf "\\[\033[38;5;%sm\\]" $1
@@ -20,11 +26,6 @@ if [[ ${TERM} == "xterm-256color" || ${TERM} == "xterm-color" ]]; then
  _set_prompt_tab() {
    PS1="\[\033]0;\u@macbook:\w\007\]"
  }
- _t_red="\[$(tput setaf 1)\]"
- _t_green="\[$(tput setaf 2)\]"
- _t_yellow="\[$(tput setaf 3)\]"
- _t_cyan="\[$(tput setaf 6)\]"
- _t_rst="\[$(tput sgr0)\]"
 else
  __c() {
    return
@@ -37,7 +38,13 @@ else
  } 
 fi
 
-__c_host=$(__c 172)
+if [[ $(id -u) == 0 ]]; then
+  __c_host=$(__c 9)
+  __prompt="#"
+else
+  __c_host=$(__c 172)
+  __prompt="$"
+fi
 __c_cwd=$(__c 38)
 __c_prompt=$(__c 2)
 __c_alert=$(__c 1)
@@ -88,7 +95,7 @@ _set_prompt() {
   _set_prompt_tab
   _set_prompt_pwd
   _set_prompt_git
-  PS1+="\$(if [[ \$? == 0 ]]; then echo \"${__c_prompt}$\"; else echo \"${__c_alert}✗\"; fi)${__r} "
+  PS1+="\$(if [[ \$? == 0 ]]; then echo \"${__c_prompt}${__prompt}\"; else echo \"${__c_alert}✗\"; fi)${__r} "
 }
 PROMPT_COMMAND="_set_prompt"
 
